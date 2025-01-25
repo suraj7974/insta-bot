@@ -77,10 +77,10 @@ class InstagramMessageSender:
             print(f"[ERROR] Login failed: {e}")
             raise
 
-    def find_users_by_hashtag(self, hashtag, max_users=10):
+    def find_users_by_hashtag(self, hashtag, max_users=4):
         print(f"[DEBUG] Searching users with hashtag #{hashtag}")
         self.driver.get(f'https://www.instagram.com/explore/tags/{hashtag}/')
-        time.sleep(5)
+        time.sleep(2)
         
         users = set()
         try:
@@ -357,11 +357,6 @@ class InstagramMessageSender:
             successful_shares = []
             for username in users:
                 try:
-                    # Clear and prepare search input
-                    search_input.clear()
-                    for _ in range(10):  # Make sure input is clear
-                        search_input.send_keys(Keys.BACKSPACE)
-                    time.sleep(1)
                     
                     # Type username and wait for search results
                     search_input.send_keys(username)
@@ -462,12 +457,13 @@ class InstagramMessageSender:
                 
                 # Try to find send button with new selectors and approach
                 send_selectors = [
-                    "//div[@role='dialog']//div[text()='Send']",
-                    "//div[@role='dialog']//div[contains(@class, '_abm0')]//div[text()='Send']",
-                    "//button[contains(@class, 'x1i10hfl')]//div[text()='Send']",
-                    "//button[contains(@class, '_acap')]//div[text()='Send']",
-                    "//div[text()='Send']"
-                ]
+                         "//div[text()='Send']", 
+                         "//div[@role='dialog']//div[text()='Send']",
+                         "//div[contains(text(), 'Send')]",
+                         "//div[contains(@class, 'x1i10hfl') and text()='Send']",
+                         "//div[@role='dialog']//div[contains(@class, 'x1i10hfl') and text()='Send']" 
+                                   ]
+
 
                 send_clicked = False
                 for selector in send_selectors:
