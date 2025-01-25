@@ -84,59 +84,107 @@ class InstagramMessageSender:
         
         users = set()
         try:
-            # Updated post grid selectors
-            post_selectors = [
-                "//div[contains(@class, '_aagv')]",
-                "//article//div[contains(@class, '_aagw')]",
-                "//div[@class='_aabd _aa8k _aanf']"
+            # First scroll to load more posts
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(3)
+
+            # Click first post to open overlay
+            first_post_selectors = [
+                "//div[contains(@class, '_aagw')]",
+                "//article//div[contains(@class, '_aagv')]",
+                "//article//a[contains(@href, '/p/')]"
             ]
             
-            for selector in post_selectors:
+            post_clicked = False
+            for selector in first_post_selectors:
                 try:
-                    posts = WebDriverWait(self.driver, 10).until(
-                        EC.presence_of_all_elements_located((By.XPATH, selector))
+                    first_post = WebDriverWait(self.driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, selector))
                     )
-                    if posts:
-                        print(f"[DEBUG] Found {len(posts)} posts with selector: {selector}")
-                        self.driver.execute_script("arguments[0].click();", posts[0])
-                        time.sleep(3)
-                        break
+                    self.driver.execute_script("arguments[0].click();", first_post)
+                    post_clicked = True
+                    print("[DEBUG] Clicked first post")
+                    time.sleep(3)
+                    break
                 except:
                     continue
 
-            # Updated username selectors
-            username_selectors = [
-                "//span[contains(@class, '_aap6')]//a",
-                "//div[contains(@class, '_aasi')]//a",
-                "//header//a[contains(@role, 'link')]"
-            ]
+            if not post_clicked:
+                raise Exception("Could not click first post")
 
             attempts = 0
-            while len(users) < max_users and attempts < max_users * 2:
+            max_attempts = max_users * 3  # Allow more attempts to find users
+
+            while len(users) < max_users and attempts < max_attempts:
                 try:
+                    # Try to get username from the current post
+                    username_selectors = [
+                        "//header//a[contains(@role, 'link')]",
+                        "//div[contains(@class, '_aaqt')]//a",
+                        "//article//header//a"
+                    ]
+                    
+                    username_found = False
                     for selector in username_selectors:
                         try:
                             username_element = WebDriverWait(self.driver, 3).until(
                                 EC.presence_of_element_located((By.XPATH, selector))
                             )
                             username = username_element.text.strip()
+                            
                             if username and username != self.username:
                                 print(f"[DEBUG] Found user: {username}")
                                 users.add(username)
+                                username_found = True
                                 break
                         except:
                             continue
 
-                    # Click next with JavaScript
-                    self.driver.execute_script(
-                        "document.querySelector('button[aria-label=\"Next\"]').click()"
-                    )
-                    time.sleep(2)
-                    attempts += 1
-                except:
-                    break
+                    if username_found:
+                        print(f"[DEBUG] Current user count: {len(users)}")
+                    
+                    # Click next with updated selectors
+                    next_selectors = [
+                        "//button[@aria-label='Next']",
+                        "//div[@class=' _aaqg _aaqh']//button",
+                        "//button[contains(@class, '_abl-')]"
+                    ]
+                    
+                    next_clicked = False
+                    for selector in next_selectors:
+                        try:
+                            next_button = WebDriverWait(self.driver, 5).until(
+                                EC.element_to_be_clickable((By.XPATH, selector))
+                            )
+                            next_button.click()
+                            next_clicked = True
+                            print("[DEBUG] Clicked next post")
+                            time.sleep(2)
+                            break
+                        except:
+                            continue
 
+                    if not next_clicked:
+                        print("[DEBUG] Could not find next button, trying JavaScript click")
+                        try:
+                            self.driver.execute_script(
+                                "document.querySelector('button[aria-label=\"Next\"]').click();"
+                            )
+                            next_clicked = True
+                            time.sleep(2)
+                        except:
+                            break
+
+                    attempts += 1
+                    
+                except Exception as e:
+                    print(f"[DEBUG] Error in attempt {attempts}: {str(e)}")
+                    attempts += 1
+                    continue
+
+            print(f"[DEBUG] Found {len(users)} unique users after {attempts} attempts")
             return list(users)
+            
         except Exception as e:
             print(f"[ERROR] Error finding users: {e}")
             return list(users)
@@ -309,58 +357,100 @@ class InstagramMessageSender:
             successful_shares = []
             for username in users:
                 try:
-                    # Clear previous input
+                    # Clear and prepare search input
                     search_input.clear()
-                    search_input.send_keys(Keys.CONTROL + "a")
-                    search_input.send_keys(Keys.DELETE)
+                    for _ in range(10):  # Make sure input is clear
+                        search_input.send_keys(Keys.BACKSPACE)
                     time.sleep(1)
                     
-                    # Type username slowly
-                    for char in username:
-                        search_input.send_keys(char)
-                        time.sleep(0.1)
+                    # Type username and wait for search results
+                    search_input.send_keys(username)
                     print(f"[DEBUG] Searching for user: {username}")
-                    time.sleep(2)
+                    time.sleep(3)  # Wait longer for search results
 
-                    # Try to select user with updated selectors
-                    user_selected = False
+                    # Updated user selection with more reliable selectors
                     user_selectors = [
-                        f"//div[contains(@class, 'x1i10hfl')]//span[contains(text(), '{username}')]",
+                        f"//div[@role='dialog']//div[contains(text(), '{username}')]",
                         f"//div[contains(@class, '_abm0')]//div[contains(text(), '{username}')]",
-                        f"//div[@role='dialog']//div[text()='{username}']",
-                        "//div[@role='dialog']//div[contains(@class, '_aacl')]"
+                        f"//div[contains(@class, 'x1i10hfl')]//div[contains(text(), '{username}')]",
+                        "//div[@role='dialog']//div[contains(@class, '_aacl')]",
+                        f"//div[contains(@role, 'button')]//div[contains(text(), '{username}')]"
                     ]
 
+                    user_selected = False
                     for selector in user_selectors:
                         try:
-                            # Wait for search results to load
-                            time.sleep(2)
-                            user_element = WebDriverWait(self.driver, 5).until(
-                                EC.element_to_be_clickable((By.XPATH, selector))
-                            )
-                            # Try multiple click methods
-                            try:
-                                user_element.click()
-                            except:
-                                try:
-                                    self.driver.execute_script("arguments[0].click();", user_element)
-                                except:
-                                    actions = ActionChains(self.driver)
-                                    actions.move_to_element(user_element).click().perform()
+                            print(f"[DEBUG] Trying selector: {selector}")
+                            # Try to find all matching elements
+                            elements = self.driver.find_elements(By.XPATH, selector)
                             
-                            user_selected = True
-                            print(f"[DEBUG] Selected user: {username}")
-                            time.sleep(1)
-                            break
+                            if elements:
+                                print(f"[DEBUG] Found {len(elements)} potential matches")
+                                for element in elements:
+                                    try:
+                                        # Check if element contains exact username
+                                        if username.lower() in element.text.lower():
+                                            # Try multiple click methods
+                                            try:
+                                                self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
+                                                time.sleep(1)
+                                                
+                                                try:
+                                                    element.click()
+                                                except:
+                                                    try:
+                                                        self.driver.execute_script("arguments[0].click();", element)
+                                                    except:
+                                                        # Try clicking parent elements
+                                                        parent = self.driver.execute_script(
+                                                            "return arguments[0].parentNode;", element
+                                                        )
+                                                        if parent:
+                                                            self.driver.execute_script("arguments[0].click();", parent)
+                                                
+                                                user_selected = True
+                                                print(f"[DEBUG] Successfully selected user: {username}")
+                                                break
+                                            except:
+                                                continue
+                                            
+                                    except:
+                                        continue
+                            
+                            if user_selected:
+                                break
+                                
                         except Exception as e:
                             print(f"[DEBUG] Selector {selector} failed: {str(e)}")
                             continue
 
                     if not user_selected:
-                        print(f"[WARNING] Could not select user: {username}")
-                        continue
+                        # Final attempt - try to find checkbox or any clickable element
+                        try:
+                            checkbox_selectors = [
+                                "//div[@role='dialog']//input[@type='checkbox']",
+                                "//div[@role='dialog']//div[@role='checkbox']",
+                                f"//label[contains(., '{username}')]//input"
+                            ]
+                            
+                            for selector in checkbox_selectors:
+                                elements = self.driver.find_elements(By.XPATH, selector)
+                                for element in elements:
+                                    if element.is_displayed():
+                                        element.click()
+                                        user_selected = True
+                                        print(f"[DEBUG] Selected user via checkbox: {username}")
+                                        break
+                                if user_selected:
+                                    break
+                        except:
+                            pass
 
-                    successful_shares.append(username)
+                    if user_selected:
+                        successful_shares.append(username)
+                        time.sleep(2)  # Wait between user selections
+                    else:
+                        print(f"[WARNING] Could not select user: {username}")
 
                 except Exception as e:
                     print(f"[ERROR] Failed to process user {username}: {e}")
