@@ -11,10 +11,12 @@ from modules.share_handler import ShareHandler
 load_dotenv()
 
 class InstagramMessageSender:
-    def __init__(self, login_email, password):
+    def __init__(self, login_email, password, target_username=None):
         print("[DEBUG] Initializing Instagram Message Sender")
         self.driver = setup_driver()
-        self.username = "kamalmarbal11"
+        self.login_email = login_email
+        self.password = password
+        self.username = target_username or "kamalmarbal11"  # Use target username if provided
         self.auth = InstagramAuth(self.driver, login_email, password)
         self.history_manager = HistoryManager()
         self.user_handler = UserHandler(self.driver, self.username)
@@ -37,6 +39,16 @@ class InstagramMessageSender:
     def send_post(self, username, post_url):
         return self.share_handler.send_post(username, post_url)
 
+    def find_users_from_multiple_hashtags(self, hashtags, users_per_hashtag=3):
+        """Find users from multiple hashtags"""
+        all_users = set()
+        for hashtag in hashtags:
+            print(f"\n[STEP] Searching hashtag: #{hashtag}")
+            users = self.user_handler.find_users_by_hashtag(hashtag, max_users=users_per_hashtag)
+            all_users.update(users)
+            time.sleep(2)  # Wait between hashtags
+        return list(all_users)
+
     def close(self):
         if self.driver:
             print("[DEBUG] Closing WebDriver")
@@ -45,24 +57,26 @@ class InstagramMessageSender:
 def main():
     login_email = os.getenv('INSTA_ID')
     password = os.getenv('INSTA_PASSWORD')
+    target_username = os.getenv('TARGET_USERNAME')
     
     if not login_email or not password:
         raise ValueError("Instagram credentials not found in .env file")
     
-    hashtag = "photography"
-    sender = InstagramMessageSender(login_email, password)
+    # Define multiple hashtags
+    hashtags = ["photography", "portrait", "model", "photooftheday"]
+    sender = InstagramMessageSender(login_email, password, target_username)
     
     try:
         sender.login()
         time.sleep(3)
         
-        # First find users
-        print("\n[STEP 1] Finding users from hashtag")
-        users = sender.find_users_by_hashtag(hashtag, max_users=5)
+        # Find users from multiple hashtags
+        print("\n[STEP 1] Finding users from multiple hashtags")
+        users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=2)
         if not users:
             print("[ERROR] No users found")
             return
-        print(f"Found {len(users)} users")
+        print(f"Found {len(users)} total unique users")
         
         # Then get posts
         print("\n[STEP 2] Getting recent posts from your profile")

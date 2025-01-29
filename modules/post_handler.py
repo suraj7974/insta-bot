@@ -12,11 +12,26 @@ class PostHandler:
     def get_my_recent_posts(self, max_posts=5):
         print(f"[DEBUG] Fetching posts from profile: {self.username}")
         
-        posts = []
         try:
-            # First refresh the profile page
+            # Navigate to target user's profile
             self.driver.get(f'https://www.instagram.com/{self.username}/')
             time.sleep(5)
+
+            # Check if profile is accessible
+            error_selectors = [
+                "//h2[contains(text(), 'Sorry')]",
+                "//h2[contains(text(), 'Private')]",
+                "//h2[contains(text(), 'No posts')]"
+            ]
+            
+            for selector in error_selectors:
+                try:
+                    error = self.driver.find_element(By.XPATH, selector)
+                    if error.is_displayed():
+                        print(f"[ERROR] Cannot access profile {self.username}: Profile might be private or not exist")
+                        return []
+                except:
+                    continue
 
             # Updated post selectors
             post_selectors = [
@@ -26,6 +41,7 @@ class PostHandler:
                 "//article//a[contains(@href, '/p/')]"
             ]
 
+            posts = []
             for selector in post_selectors:
                 try:
                     elements = WebDriverWait(self.driver, 10).until(
