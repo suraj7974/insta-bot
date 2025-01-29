@@ -1,0 +1,20 @@
+# Environment variables
+.env
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+modules/__pycache__/
+utils/__pycache__/
+
+# History files
+sent_posts_history.json
+
+# Browser data
+chromedriver
+geckodriver.log
+
+# Logs
+*.log
+logs/
