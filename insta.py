@@ -7,6 +7,7 @@ from modules.history import HistoryManager
 from modules.user_handler import UserHandler
 from modules.post_handler import PostHandler
 from modules.share_handler import ShareHandler
+import random
 
 load_dotenv()
 
@@ -16,7 +17,7 @@ class InstagramMessageSender:
         self.driver = setup_driver()
         self.login_email = login_email
         self.password = password
-        self.username = target_username or "kamalmarbal11"  # Use target username if provided
+        self.username = target_username
         self.auth = InstagramAuth(self.driver, login_email, password)
         self.history_manager = HistoryManager()
         self.user_handler = UserHandler(self.driver, self.username)
@@ -46,7 +47,7 @@ class InstagramMessageSender:
             print(f"\n[STEP] Searching hashtag: #{hashtag}")
             users = self.user_handler.find_users_by_hashtag(hashtag, max_users=users_per_hashtag)
             all_users.update(users)
-            time.sleep(2)  # Wait between hashtags
+            time.sleep(1)  # Wait between hashtags
         return list(all_users)
 
     def close(self):
@@ -62,41 +63,54 @@ def main():
     if not login_email or not password:
         raise ValueError("Instagram credentials not found in .env file")
     
-    # Define multiple hashtags
-    hashtags = ["photography", "portrait", "model", "photooftheday"]
+    hashtags = ["discoverunder1kvintage", "noaargamani", "ronllave"]
     sender = InstagramMessageSender(login_email, password, target_username)
     
     try:
         sender.login()
-        time.sleep(3)
+        time.sleep(2)
         
         # Find users from multiple hashtags
-        print("\n[STEP 1] Finding users from multiple hashtags")
+        print("\n[STEP 1] Finding users from hashtags")
         users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=2)
         if not users:
             print("[ERROR] No users found")
             return
-        print(f"Found {len(users)} total unique users")
         
-        # Then get posts
-        print("\n[STEP 2] Getting recent posts from your profile")
-        recent_posts = sender.get_my_recent_posts(max_posts=1)  # Get only latest post
+        # Randomize user order
+        users = list(users)
+        random.shuffle(users)
+        print(f"Found {len(users)} users (randomized)")
+        
+        # Get posts
+        print("\n[STEP 2] Getting recent posts")
+        recent_posts = sender.get_my_recent_posts(max_posts=1)
         if not recent_posts:
             print("[ERROR] No posts found to share")
             return
         
-        # Share the latest post with all users at once
+        # Share posts one by one
         latest_post = recent_posts[0]
-        print(f"\n[STEP 3] Sharing latest post: {latest_post['url']}")
+        print(f"\n[STEP 3] Starting individual shares for post: {latest_post['url']}")
         
         successful_users = sender.share_post_with_users(latest_post['url'], users)
         
         # Update history
         for user in successful_users:
-            sender.history_manager.sent_history["users"].setdefault(user, []).append(latest_post['url'])
-        sender.history_manager._save_history()
+            sender.history_manager.update_history(user, latest_post['url'])
+            sender.history_manager._save_history()  # Save after each successful share
         
-    finally:
+        print(f"\nCompleted! Successfully shared with {len(successful_users)} users")
+        print("Browser will remain open. Press Ctrl+C to close.")
+        
+        while True:
+            time.sleep(1)
+            
+    except KeyboardInterrupt:
+        print("\nClosing browser...")
+        sender.close()
+    except Exception as e:
+        print(f"\nError occurred: {e}")
         sender.close()
 
 if __name__ == "__main__":

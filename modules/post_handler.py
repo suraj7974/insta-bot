@@ -15,7 +15,7 @@ class PostHandler:
         try:
             # Navigate to target user's profile
             self.driver.get(f'https://www.instagram.com/{self.username}/')
-            time.sleep(5)
+            time.sleep(3)
 
             # Check if profile is accessible
             error_selectors = [
@@ -44,14 +44,14 @@ class PostHandler:
             posts = []
             for selector in post_selectors:
                 try:
-                    elements = WebDriverWait(self.driver, 10).until(
+                    elements = WebDriverWait(self.driver, 2).until(
                         EC.presence_of_all_elements_located((By.XPATH, selector))
                     )
                     
                     if elements:
                         print(f"[DEBUG] Found {len(elements)} posts with selector: {selector}")
                         self.driver.execute_script("window.scrollTo(0, 100);")  # Slight scroll to load images
-                        time.sleep(2)
+                        time.sleep(1)
                         
                         for element in elements[:max_posts]:
                             href = element.get_attribute('href')

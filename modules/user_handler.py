@@ -12,7 +12,7 @@ class UserHandler:
         print(f"[DEBUG] Searching users with hashtag #{hashtag}")
         try:
             self.driver.get(f'https://www.instagram.com/explore/tags/{hashtag}/')
-            time.sleep(3)  # Increased wait time for hashtag page load
+            time.sleep(5)  # Increased wait time for hashtag page load
             
             # Add error handling for hashtag not found or restricted
             error_selectors = [
@@ -34,7 +34,7 @@ class UserHandler:
             try:
                 # First scroll to load more posts
                 self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                time.sleep(3)
+                time.sleep(1)
 
                 # Click first post to open overlay
                 first_post_selectors = [
@@ -46,13 +46,13 @@ class UserHandler:
                 post_clicked = False
                 for selector in first_post_selectors:
                     try:
-                        first_post = WebDriverWait(self.driver, 10).until(
+                        first_post = WebDriverWait(self.driver, 2).until(
                             EC.presence_of_element_located((By.XPATH, selector))
                         )
                         self.driver.execute_script("arguments[0].click();", first_post)
                         post_clicked = True
                         print("[DEBUG] Clicked first post")
-                        time.sleep(3)
+                        time.sleep(1)
                         break
                     except:
                         continue
@@ -61,7 +61,7 @@ class UserHandler:
                     raise Exception("Could not click first post")
 
                 attempts = 0
-                max_attempts = max_users * 3  # Allow more attempts to find users
+                max_attempts = max_users 
 
                 while len(users) < max_users and attempts < max_attempts:
                     try:
@@ -101,7 +101,7 @@ class UserHandler:
                         next_clicked = False
                         for selector in next_selectors:
                             try:
-                                next_button = WebDriverWait(self.driver, 5).until(
+                                next_button = WebDriverWait(self.driver, 1).until(
                                     EC.element_to_be_clickable((By.XPATH, selector))
                                 )
                                 next_button.click()
@@ -119,7 +119,7 @@ class UserHandler:
                                     "document.querySelector('button[aria-label=\"Next\"]').click();"
                                 )
                                 next_clicked = True
-                                time.sleep(2)
+                                time.sleep(1)
                             except:
                                 break
 
