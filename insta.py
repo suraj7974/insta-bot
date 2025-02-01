@@ -22,7 +22,7 @@ class InstagramMessageSender:
         self.history_manager = HistoryManager()
         self.user_handler = UserHandler(self.driver, self.username)
         self.post_handler = PostHandler(self.driver, self.username)
-        self.share_handler = ShareHandler(self.driver)
+        self.share_handler = ShareHandler(self.driver, self.history_manager)
         self.profile_found = True
 
     def login(self):
@@ -63,7 +63,7 @@ def main():
     if not login_email or not password:
         raise ValueError("Instagram credentials not found in .env file")
     
-    hashtags = ["discoverunder1kvintage", "noaargamani", "ronllave"]
+    hashtags = ["lesgoo", "whynot", "nikki"]
     sender = InstagramMessageSender(login_email, password, target_username)
     
     try:
@@ -72,7 +72,7 @@ def main():
         
         # Find users from multiple hashtags
         print("\n[STEP 1] Finding users from hashtags")
-        users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=2)
+        users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=5)
         if not users:
             print("[ERROR] No users found")
             return
@@ -89,11 +89,21 @@ def main():
             print("[ERROR] No posts found to share")
             return
         
-        # Share posts one by one
+        # Filter out users who already received the post
         latest_post = recent_posts[0]
+        filtered_users = [
+            user for user in users 
+            if not sender.history_manager.has_shared_with_user(user, latest_post['url'])
+        ]
+        
+        if not filtered_users:
+            print("[INFO] All users have already received this post")
+            return
+            
+        print(f"Found {len(filtered_users)} users who haven't received this post")
         print(f"\n[STEP 3] Starting individual shares for post: {latest_post['url']}")
         
-        successful_users = sender.share_post_with_users(latest_post['url'], users)
+        successful_users = sender.share_post_with_users(latest_post['url'], filtered_users)
         
         # Update history
         for user in successful_users:

@@ -61,7 +61,7 @@ class UserHandler:
                     raise Exception("Could not click first post")
 
                 attempts = 0
-                max_attempts = max_users 
+                max_attempts = max_users * 2
 
                 while len(users) < max_users and attempts < max_attempts:
                     try:

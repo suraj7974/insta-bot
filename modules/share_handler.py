@@ -6,9 +6,10 @@ import random
 import time
 
 class ShareHandler:
-    def __init__(self, driver):
+    def __init__(self, driver, history_manager=None):  # Add history_manager parameter
         self.driver = driver
         self.max_retries = 2
+        self.history_manager = history_manager
 
     def share_post_with_users(self, post_url, users):
         successful_shares = []
@@ -16,6 +17,11 @@ class ShareHandler:
         
         for index, username in enumerate(users, 1):
             try:
+                # Skip if already shared with this user
+                if self.history_manager and self.history_manager.has_shared_with_user(username, post_url):
+                    print(f"[INFO] Skipping {username} - already received this post")
+                    continue
+
                 print(f"\n[DEBUG] Processing user {index}/{len(users)}: {username}")
                 
                 # Go to post for each user
