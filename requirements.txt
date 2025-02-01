@@ -1,0 +1,5 @@
+numpy==2.0.2
+pillow==11.0.0
+python-dateutil==2.8.2
+python-dotenv==1.0.1
+selenium==4.28.1
