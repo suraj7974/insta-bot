@@ -2,11 +2,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 import random
 import time
 
 class ShareHandler:
-    def __init__(self, driver, history_manager=None):  # Add history_manager parameter
+    def __init__(self, driver, history_manager=None):
         self.driver = driver
         self.max_retries = 2
         self.history_manager = history_manager
@@ -73,7 +74,9 @@ class ShareHandler:
                 f"//div[contains(@class, '_abm0')]//div[contains(text(), '{username}')]",
                 f"//div[contains(@class, 'x1i10hfl')]//div[contains(text(), '{username}')]",
                 "//div[@role='dialog']//div[contains(@class, '_aacl')]",
-                f"//div[contains(@role, 'button')]//div[contains(text(), '{username}')]"
+                f"//div[contains(@role, 'button')]//div[contains(text(), '{username}')]",
+                f"//div[contains(@class, 'x1dm5mii')]//div[contains(text(), '{username}')]", 
+                f"//div[contains(@class, 'x9f619')]//div[contains(text(), '{username}')]"     
             ]
 
             user_selected = False
@@ -87,9 +90,25 @@ class ShareHandler:
                         for element in elements:
                             try:
                                 if username.lower() in element.text.lower():
+                                    # Scroll element into view
                                     self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
                                     time.sleep(2)
-                                    element.click()
+                                    
+                                    # Try multiple click methods
+                                    try:
+                                        # Direct click
+                                        element.click()
+                                    except:
+                                        try:
+                                            # JavaScript click
+                                            self.driver.execute_script("arguments[0].click();", element)
+                                        except:
+                                            try:
+                                                # Action chains click
+                                                ActionChains(self.driver).move_to_element(element).click().perform()
+                                            except:
+                                                continue
+                                    
                                     user_selected = True
                                     print(f"[DEBUG] Successfully selected user: {username}")
                                     time.sleep(1)
@@ -106,7 +125,9 @@ class ShareHandler:
                 checkbox_selectors = [
                     "//div[@role='dialog']//input[@type='checkbox']",
                     "//div[@role='dialog']//div[@role='checkbox']",
-                    f"//label[contains(., '{username}')]//input"
+                    f"//label[contains(., '{username}')]//input",
+                    "//div[contains(@class, 'x1i10hfl')]//input[@type='checkbox']",  # Added new selector
+                    f"//div[contains(@class, 'x9f619')]//input[@type='checkbox']"    # Added new selector
                 ]
                 
                 for selector in checkbox_selectors:
@@ -114,7 +135,13 @@ class ShareHandler:
                         elements = self.driver.find_elements(By.XPATH, selector)
                         for element in elements:
                             if element.is_displayed():
-                                element.click()
+                                try:
+                                    element.click()
+                                except:
+                                    try:
+                                        self.driver.execute_script("arguments[0].click();", element)
+                                    except:
+                                        continue
                                 user_selected = True
                                 print(f"[DEBUG] Selected user via checkbox: {username}")
                                 time.sleep(1)
@@ -136,7 +163,9 @@ class ShareHandler:
                 "//div[@role='dialog']//div[text()='Send']",
                 "//div[contains(text(), 'Send')]",
                 "//div[contains(@class, 'x1i10hfl') and text()='Send']",
-                "//div[@role='dialog']//div[contains(@class, 'x1i10hfl') and text()='Send']"
+                "//div[@role='dialog']//div[contains(@class, 'x1i10hfl') and text()='Send']",
+                "//button[contains(@class, '_acan') and contains(., 'Send')]",  # Added new selector
+                "//div[contains(@class, '_ab8w')]//div[text()='Send']"         # Added new selector
             ]
 
             for selector in send_selectors:
@@ -144,18 +173,38 @@ class ShareHandler:
                     send_buttons = self.driver.find_elements(By.XPATH, selector)
                     for btn in send_buttons:
                         if btn.is_displayed() and btn.is_enabled():
+                            # Scroll button into view
                             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
                             time.sleep(2)
+                            
+                            # Try multiple click methods
                             try:
+                                # Direct click
                                 btn.click()
-                                print("[DEBUG] Successfully clicked send button")
+                                print("[DEBUG] Successfully clicked send button with direct click")
                                 time.sleep(3)
                                 return True
                             except:
-                                continue
-                except:
+                                try:
+                                    # JavaScript click
+                                    self.driver.execute_script("arguments[0].click();", btn)
+                                    print("[DEBUG] Successfully clicked send button with JavaScript")
+                                    time.sleep(3)
+                                    return True
+                                except:
+                                    try:
+                                        # Action chains click
+                                        ActionChains(self.driver).move_to_element(btn).click().perform()
+                                        print("[DEBUG] Successfully clicked send button with Action Chains")
+                                        time.sleep(3)
+                                        return True
+                                    except:
+                                        continue
+                except Exception as e:
+                    print(f"[DEBUG] Send button selector {selector} failed: {str(e)}")
                     continue
 
+            print("[DEBUG] Could not find or click any send button")
             return False
 
         except Exception as e:
