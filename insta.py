@@ -79,13 +79,9 @@ def main():
   "RaipurMarathon",
   "AbujhmadMarathon",
   "RunnersOfIndia",
-  "IndianFitnessCommunity",
   "RunningCoachIndia",
-  "FitnessIndia",
-  "HealthIndia",
   "RunForFitness",
   "RunningEventIndia",
-  "SportsIndia",
   "MarathonEventIndia",
   "RaceDayIndia",
   "RunForCauseIndia",
@@ -103,7 +99,7 @@ def main():
         
         # Find users from multiple hashtags
         print("\n[STEP 1] Finding users from hashtags")
-        users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=15)
+        users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=10)
         if not users:
             print("[ERROR] No users found")
             return
