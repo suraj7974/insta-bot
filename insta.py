@@ -63,7 +63,38 @@ def main():
     if not login_email or not password:
         raise ValueError("Instagram credentials not found in .env file")
     
-    hashtags = ["lesgoo", "whynot", "nikki"]
+    hashtags =[
+  "IndiaMarathon",
+  "RunIndia",
+  "MarathonIndia",
+  "IndianRunners",
+  "RunForIndia",
+  "RunningIndia",
+  "DelhiMarathon",
+  "MumbaiMarathon",
+  "BangaloreMarathon",
+  "HyderabadMarathon",
+  "KolkataMarathon",
+  "ChhattisgarhMarathon",
+  "RaipurMarathon",
+  "AbujhmadMarathon",
+  "RunnersOfIndia",
+  "IndianFitnessCommunity",
+  "RunningCoachIndia",
+  "FitnessIndia",
+  "HealthIndia",
+  "RunForFitness",
+  "RunningEventIndia",
+  "SportsIndia",
+  "MarathonEventIndia",
+  "RaceDayIndia",
+  "RunForCauseIndia",
+  "RunForCharityIndia",
+  "CommunityRunIndia",
+  "GreenMarathonIndia",
+  "RunForNatureIndia"
+]
+
     sender = InstagramMessageSender(login_email, password, target_username)
     
     try:
@@ -72,7 +103,7 @@ def main():
         
         # Find users from multiple hashtags
         print("\n[STEP 1] Finding users from hashtags")
-        users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=5)
+        users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=15)
         if not users:
             print("[ERROR] No users found")
             return
