@@ -20,7 +20,7 @@ class InstagramMessageSender:
         self.username = target_username
         self.auth = InstagramAuth(self.driver, login_email, password)
         self.history_manager = HistoryManager()
-        self.user_handler = UserHandler(self.driver, self.username, self.history_manager)  # Pass history_manager
+        self.user_handler = UserHandler(self.driver, self.username, self.history_manager) 
         self.post_handler = PostHandler(self.driver, self.username)
         self.share_handler = ShareHandler(self.driver, self.history_manager)
         self.profile_found = True
@@ -47,7 +47,7 @@ class InstagramMessageSender:
             print(f"\n[STEP] Searching hashtag: #{hashtag}")
             users = self.user_handler.find_users_by_hashtag(hashtag, max_users=users_per_hashtag, post_url=post_url)
             all_users.update(users)
-            time.sleep(1)  # Wait between hashtags
+            time.sleep(1) 
         return list(all_users)
 
     def close(self):
