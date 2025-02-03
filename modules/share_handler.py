@@ -52,7 +52,7 @@ class ShareHandler:
                     if self._click_and_verify_send():
                         successful_shares.append(username)
                         print(f"[DEBUG] Successfully shared with {username}")
-                        delay = random.uniform(2, 5)  # Random delay between shares
+                        delay = random.uniform(5, 10)  # Random delay between shares
                         print(f"[DEBUG] Waiting {delay:.1f} seconds before next share...")
                         time.sleep(delay)
                     else:

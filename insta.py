@@ -20,7 +20,7 @@ class InstagramMessageSender:
         self.username = target_username
         self.auth = InstagramAuth(self.driver, login_email, password)
         self.history_manager = HistoryManager()
-        self.user_handler = UserHandler(self.driver, self.username)
+        self.user_handler = UserHandler(self.driver, self.username, self.history_manager)  # Pass history_manager
         self.post_handler = PostHandler(self.driver, self.username)
         self.share_handler = ShareHandler(self.driver, self.history_manager)
         self.profile_found = True
@@ -40,12 +40,12 @@ class InstagramMessageSender:
     def send_post(self, username, post_url):
         return self.share_handler.send_post(username, post_url)
 
-    def find_users_from_multiple_hashtags(self, hashtags, users_per_hashtag=3):
+    def find_users_from_multiple_hashtags(self, hashtags, users_per_hashtag=3, post_url=None):
         """Find users from multiple hashtags"""
         all_users = set()
         for hashtag in hashtags:
             print(f"\n[STEP] Searching hashtag: #{hashtag}")
-            users = self.user_handler.find_users_by_hashtag(hashtag, max_users=users_per_hashtag)
+            users = self.user_handler.find_users_by_hashtag(hashtag, max_users=users_per_hashtag, post_url=post_url)
             all_users.update(users)
             time.sleep(1)  # Wait between hashtags
         return list(all_users)
@@ -77,7 +77,6 @@ def main():
   "KolkataMarathon",
   "ChhattisgarhMarathon",
   "RaipurMarathon",
-  "AbujhmadMarathon",
   "RunnersOfIndia",
   "RunningCoachIndia",
   "RunForFitness",
@@ -97,9 +96,18 @@ def main():
         sender.login()
         time.sleep(2)
         
-        # Find users from multiple hashtags
-        print("\n[STEP 1] Finding users from hashtags")
-        users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=10)
+        # Get posts first to have the URL for history checking
+        print("\n[STEP 1] Getting recent posts")
+        recent_posts = sender.get_my_recent_posts(max_posts=1)
+        if not recent_posts:
+            print("[ERROR] No posts found to share")
+            return
+        
+        latest_post = recent_posts[0]
+        
+        # Now find users with history checking
+        print("\n[STEP 2] Finding users from hashtags")
+        users = sender.find_users_from_multiple_hashtags(hashtags, users_per_hashtag=10, post_url=latest_post['url'])
         if not users:
             print("[ERROR] No users found")
             return
@@ -109,15 +117,7 @@ def main():
         random.shuffle(users)
         print(f"Found {len(users)} users (randomized)")
         
-        # Get posts
-        print("\n[STEP 2] Getting recent posts")
-        recent_posts = sender.get_my_recent_posts(max_posts=1)
-        if not recent_posts:
-            print("[ERROR] No posts found to share")
-            return
-        
         # Filter out users who already received the post
-        latest_post = recent_posts[0]
         filtered_users = [
             user for user in users 
             if not sender.history_manager.has_shared_with_user(user, latest_post['url'])
