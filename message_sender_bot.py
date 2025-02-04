@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 
 load_dotenv()
 
@@ -24,126 +25,89 @@ class InstagramMessageBot:
         self.history_manager = HistoryManager('sent_messages_history.json')  # Separate history file
         self.user_handler = UserHandler(self.driver, self.username, self.history_manager)
         self.message_templates = [
-            # Template 1 - Formal and Professional
-            """Hi {username}! 👋
 
-We invite you to be part of the historic Abujhmad Marathon 2025! Experience running through the stunning landscapes of Chhattisgarh.
+    # Template 1 - Formal and Professional
+    "Hi {username}! We invite you to be part of the historic Abujhmad Marathon 2025! 🏃‍♂️✨ Experience running through the stunning landscapes of Chhattisgarh. What's special: ✅ Scenic beauty of Abujhmad ✅ Professional chip timing ✅ Finisher medals ✅ Prize pool: Rs.1.5 Lakhs. Official updates: https://www.instagram.com/abujhmadmarathon2025",
+    "Register: https://www.runabhujhmad.in"
 
-💫 What's special:
-• Scenic beauty of Abujhmad
-• Professional chip timing
-• Finisher medals
-• Prize pool: ₹1.5 Lakhs
+    # Template 2 - Casual and Friendly
+    "Hey {username}! Love running? You're going to love this! 🎉 Abujhmad Marathon 2025 is coming up, and it's not just another marathon – it's an adventure through one of India's most beautiful regions! Highlights: 🏞️ Epic running routes 🏅 Amazing medals 💰 Cash prizes worth 1.5L 🔥 Unforgettable experience. 👉 Check us out: https://www.instagram.com/abujhmadmarathon2025",
+    "Sign up: https://www.runabhujhmad.in"
 
-Register: https://www.runabhujhmad.in
-Official updates: https://www.instagram.com/abujhmadmarathon2025""",
+    # Template 3 - Community Focused
+    "Namaste {username}! Join the running community at Abujhmad Marathon 2025! 🏃‍♀️ Be part of something special as we bring together runners from across India in this unique location. Event Features: ✔️ Professional organization ✔️ Chip timing ✔️ Finisher medals ✔️ Prizes up to Rs.1,50,000. Follow: https://www.instagram.com/abujhmadmarathon2025",
+    "Visit: https://www.runabhujhmad.in"
 
-            # Template 2 - Casual and Friendly
-            """Hey {username}! 🏃‍♂️
+    # Template 4 - Achievement Oriented
+    "Dear {username}, Ready for your next running milestone? 🏆 Abujhmad Marathon 2025 offers a unique opportunity to challenge yourself in one of India's most spectacular settings. What we offer: 🏃‍♂️ Professional race experience ⏱️ Chip-based timing 🏅 Exclusive medals 💰 Cash prizes (1.5L).Updates: https://www.instagram.com/abujhmadmarathon2025",
+    "Register now: https://www.runabhujhmad.in"
 
-Love running? You're going to love this! The Abujhmad Marathon 2025 is coming up, and it's not just another marathon - it's an adventure through one of India's most beautiful regions!
+    # Template 5 - Experience Focused
+    "Hello {username}! Ever dreamed of running through pristine landscapes? 🌿 Abujhmad Marathon 2025 makes it a reality! Experience the beauty of Chhattisgarh while competing in a world-class event. Highlights: ✨ Beautiful course ⏳ Pro timing system 🏅 Special medals 💰 Big prizes (Rs.1.5L).Follow: https://www.instagram.com/abujhmadmarathon2025"
+    "Join us: https://www.runabhujhmad.in"
+]
 
-✨ Highlights:
-- Epic running routes
-- Amazing medals
-- Cash prizes worth 1.5L
-- Unforgettable experience
 
-Check us out: https://www.instagram.com/abujhmadmarathon2025
-Sign up: https://www.runabhujhmad.in""",
-
-            # Template 3 - Community Focused
-            """Namaste {username}! 🙏
-
-Join the running community at Abujhmad Marathon 2025! Be part of something special as we bring together runners from across India in this unique location.
-
-🎯 Event Features:
-- Professional organization
-- Chip timing
-- Finisher medals
-- Prizes up to ₹1,50,000
-
-Visit https://www.runabhujhmad.in
-Follow https://www.instagram.com/abujhmadmarathon2025""",
-
-            # Template 4 - Achievement Oriented
-            """Greetings {username}! 🌟
-
-Ready for your next running milestone? The Abujhmad Marathon 2025 offers a unique opportunity to challenge yourself in one of India's most spectacular settings.
-
-🏆 Offering:
-- Professional race experience
-- Chip-based timing
-- Exclusive medals
-- Cash prizes (1.5L)
-
-Register now: https://www.runabhujhmad.in
-Updates: https://www.instagram.com/abujhmadmarathon2025""",
-
-            # Template 5 - Experience Focused
-            """Hello {username}! 🎉
-
-Ever dreamed of running through pristine landscapes? The Abujhmad Marathon 2025 makes it reality! Experience the beauty of Chhattisgarh while competing in a world-class event.
-
-⭐ Highlights:
-• Beautiful course
-• Pro timing system
-• Special medals
-• Big prizes (₹1.5L)
-
-Join us: https://www.runabhujhmad.in
-Follow: https://www.instagram.com/abujhmadmarathon2025"""
-        ]
 
     def send_promotional_message(self, username):
         """Send a personalized promotional message to a user"""
         try:
             print(f"[DEBUG] Sending message to: {username}")
             self.driver.get(f'https://www.instagram.com/{username}/')
-            time.sleep(2 + random.uniform(1, 2))
+            time.sleep(3)
 
             # Click Message button
             message_button_selectors = [
                 "//div[text()='Message']",
                 "//button[contains(text(), 'Message')]",
-                "//a[contains(@href, '/direct/')]"
+                "//div[contains(@class, '_acas')]//div[text()='Message']"
             ]
 
             for selector in message_button_selectors:
                 try:
-                    message_btn = WebDriverWait(self.driver, 4).until(
+                    message_btn = WebDriverWait(self.driver, 5).until(
                         EC.element_to_be_clickable((By.XPATH, selector))
                     )
                     message_btn.click()
                     print("[DEBUG] Clicked message button")
-                    time.sleep(2)
+                    time.sleep(3)
                     break
                 except:
                     continue
 
-            # Find message input and send message
-            message_input_selectors = [
-                "//textarea[@placeholder='Message...']",
-                "//div[@contenteditable='true']",
-                "//div[@role='textbox']"
-            ]
-
-            # Select random message template
+            # Get message input box
             message = random.choice(self.message_templates).format(username=username)
 
-            for selector in message_input_selectors:
-                try:
-                    message_input = WebDriverWait(self.driver, 4).until(
-                        EC.presence_of_element_located((By.XPATH, selector))
-                    )
-                    message_input.clear()
-                    message_input.send_keys(message)
-                    time.sleep(1)
-                    message_input.send_keys(Keys.RETURN)
-                    print(f"[DEBUG] Sent message to {username}")
+            try:
+                # Try to find the message input box
+                message_box = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "div[contenteditable='true']"))
+                )
+                
+                # Clear any existing text
+                message_box.clear()
+                
+                # Send message using ActionChains
+                actions = ActionChains(self.driver)
+                actions.move_to_element(message_box)
+                actions.click()
+                actions.pause(1)  # Small pause
+                actions.send_keys(message)
+                actions.pause(1)  # Small pause
+                actions.send_keys(Keys.RETURN)
+                actions.perform()
+                
+                print("[DEBUG] Message entered and sent")
+                time.sleep(2)
+                
+                # Verify message was sent by checking if we're still in DM view
+                if self.driver.current_url.startswith('https://www.instagram.com/direct/'):
+                    print("[DEBUG] Successfully sent message")
                     return True
-                except:
-                    continue
+                
+            except Exception as e:
+                print(f"[DEBUG] Failed to send message: {e}")
+                return False
 
             return False
 
@@ -196,7 +160,7 @@ def main():
         print("\n[STEP 1] Finding users from hashtags")
         all_users = set()
         for hashtag in hashtags:
-            users = sender.user_handler.find_users_by_hashtag(hashtag, max_users=5)
+            users = sender.user_handler.find_users_by_hashtag(hashtag, max_users=15)
             all_users.update(users)
             time.sleep(random.uniform(20, 40))  # Longer delay between hashtags
         
@@ -226,7 +190,7 @@ def main():
                 sender.history_manager.update_history(username, "promo_message")
                 
                 # Random delay between messages (longer to avoid spam detection)
-                delay = random.uniform(40, 600)
+                delay = random.uniform(40, 60)
                 print(f"Waiting {delay:.1f} seconds before next message...")
                 time.sleep(delay)
         

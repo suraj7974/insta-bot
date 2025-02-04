@@ -4,13 +4,16 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 class UserHandler:
-    def __init__(self, driver, username, history_manager=None):  # Add history_manager parameter
+    def __init__(self, driver, username, history_manager=None):
         self.driver = driver
         self.username = username
-        self.history_manager = history_manager  # Store history manager
+        self.history_manager = history_manager
 
-    def find_users_by_hashtag(self, hashtag, max_users=4, post_url=None):  # Add post_url parameter
+    def find_users_by_hashtag(self, hashtag, max_users=4):
         print(f"[DEBUG] Searching users with hashtag #{hashtag}")
+        users = set()
+        skipped_users = 0
+        
         try:
             self.driver.get(f'https://www.instagram.com/explore/tags/{hashtag}/')
             time.sleep(5)  # Increased wait time for hashtag page load
@@ -31,8 +34,6 @@ class UserHandler:
                 except:
                     continue
 
-            users = set()
-            skipped_users = 0
             try:
                 # First scroll to load more posts
                 self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -63,7 +64,7 @@ class UserHandler:
                     raise Exception("Could not click first post")
 
                 attempts = 0
-                max_attempts = max_users * 5  # Increased to account for skipped users
+                max_attempts = max_users * 2
 
                 while len(users) < max_users and attempts < max_attempts:
                     try:
@@ -84,8 +85,8 @@ class UserHandler:
                                 
                                 if username and username != self.username:
                                     # Check history before adding user
-                                    if self.history_manager and post_url and self.history_manager.has_shared_with_user(username, post_url):
-                                        print(f"[DEBUG] Skipping {username} - already in history")
+                                    if self.history_manager and self.history_manager.has_shared_with_user(username, "promo_message"):
+                                        print(f"[DEBUG] Skipping {username} - already contacted")
                                         skipped_users += 1
                                     else:
                                         print(f"[DEBUG] Found user: {username}")
@@ -137,7 +138,7 @@ class UserHandler:
                         attempts += 1
                         continue
 
-                print(f"[DEBUG] Found {len(users)} unique users, skipped {skipped_users} users")
+                print(f"[DEBUG] Found {len(users)} new users, skipped {skipped_users} previously contacted users")
                 return list(users)
                 
             except Exception as e:

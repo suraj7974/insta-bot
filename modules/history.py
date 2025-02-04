@@ -1,4 +1,5 @@
 import json
+import os
 
 class HistoryManager:
     def __init__(self, history_file='sent_posts_history.json'):
@@ -7,10 +8,26 @@ class HistoryManager:
 
     def _load_history(self):
         try:
+            # Create file if it doesn't exist
+            if not os.path.exists(self.history_file):
+                with open(self.history_file, 'w') as f:
+                    json.dump({"users": {}}, f)
+                return {"users": {}}
+            
+            # Try to load existing file
             with open(self.history_file, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {"users": {}}
+                content = f.read().strip()
+                if not content:  # If file is empty
+                    default_data = {"users": {}}
+                    json.dump(default_data, open(self.history_file, 'w'))
+                    return default_data
+                return json.loads(content)
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Handle any JSON errors by creating new history
+            default_data = {"users": {}}
+            with open(self.history_file, 'w') as f:
+                json.dump(default_data, f)
+            return default_data
 
     def _save_history(self):
         with open(self.history_file, 'w') as f:
